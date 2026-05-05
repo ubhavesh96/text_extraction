@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/ocr"
-  to = "/.netlify/functions/ocr"
+  to = "/.netlify/functions/ocr_handler"
   status = 200
-  force = false
+  force = true
