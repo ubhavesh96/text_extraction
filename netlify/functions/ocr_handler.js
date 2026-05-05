@@ -41,7 +41,7 @@ exports.handler = async function(event, context) {
     }
 
     const buffer = Buffer.from(image, 'base64');
-    const worker = createWorker();
+    const worker = await createWorker();
 
     await worker.load();
     await worker.loadLanguage('eng');
