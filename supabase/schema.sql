@@ -5,6 +5,7 @@ create extension if not exists pgcrypto;
 create table if not exists documents (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
+  user_id uuid not null references auth.users(id) on delete cascade,
   file_name text,
   mime_type text,
   document_type text,
@@ -17,10 +18,14 @@ create table if not exists documents (
   confidence numeric
 );
 
-create index if not exists documents_created_at_idx on documents (created_at desc);
+create index if not exists documents_user_id_created_at_idx on documents (user_id, created_at desc);
 
 alter table documents enable row level security;
--- No policies are added on purpose: only the service-role key (used
--- server-side only, inside the Netlify functions) can read/write this
--- table. The anon/public key gets nothing, so this stays private even
--- though the app itself has no login.
+
+create policy "Users can view their own documents"
+  on documents for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert their own documents"
+  on documents for insert
+  with check (auth.uid() = user_id);

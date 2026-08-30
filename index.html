@@ -503,6 +503,60 @@
     padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0,0,0,0); border: 0;
   }
+
+  .hidden { display: none !important; }
+
+  /* Auth */
+  .user-bar { display: flex; align-items: center; gap: 10px; }
+  .user-bar .email {
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  button.secondary {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button.secondary:hover { color: var(--text); border-color: var(--text-faint); }
+
+  .auth-card {
+    max-width: 420px;
+    margin: 60px auto 0;
+    padding: 32px;
+    text-align: center;
+  }
+  .auth-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+  .auth-card > p { margin: 0 0 22px; color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+  .auth-form { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .auth-form label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
+  .auth-form input[type="email"] {
+    width: 100%;
+    padding: 11px 13px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+  }
+  .auth-form input[type="email"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .auth-status {
+    font-size: 13px;
+    color: var(--success);
+    display: none;
+    text-align: center;
+  }
+  .auth-status.visible { display: block; }
 </style>
 </head>
 <body>
@@ -516,8 +570,27 @@
         <p>Document understanding, structured</p>
       </div>
     </div>
+    <div class="user-bar hidden" id="userBar">
+      <span class="email" id="userEmail"></span>
+      <button class="secondary" id="signOutBtn">Sign out</button>
+    </div>
   </header>
 
+  <div class="card auth-card hidden" id="authGate">
+    <h2>Sign in to Docly</h2>
+    <p>Enter your email and we'll send you a one-time sign-in link — no password needed.</p>
+    <form class="auth-form" id="authForm">
+      <label for="authEmail">Email address</label>
+      <input type="email" id="authEmail" placeholder="you@example.com" required autocomplete="email">
+      <button type="submit" class="primary" id="authSendBtn" style="justify-content:center;">
+        <span id="authSendBtnLabel">Send magic link</span>
+      </button>
+      <div class="auth-status" id="authStatus"></div>
+      <div class="banner error" id="authError"></div>
+    </form>
+  </div>
+
+  <div id="appContent" class="hidden">
   <div class="hero">
     <h2>Turn any document into structured data</h2>
     <p>Drop in a receipt, invoice, ID, form, or scanned letter. Docly reads it, understands it, and organizes it into clean fields and tables — no typing required.</p>
@@ -599,11 +672,85 @@
       </div>
     </aside>
   </div>
+  </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function () {
   'use strict';
+
+  var SUPABASE_URL = 'https://xdetpbcdpzwrjgpqhrsk.supabase.co';
+  var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XT-Eftr_kYs4Oj59oJy9BA_9CLcxoBA';
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+  var authGate = document.getElementById('authGate');
+  var appContent = document.getElementById('appContent');
+  var userBar = document.getElementById('userBar');
+  var userEmailEl = document.getElementById('userEmail');
+  var signOutBtn = document.getElementById('signOutBtn');
+  var authForm = document.getElementById('authForm');
+  var authEmailInput = document.getElementById('authEmail');
+  var authSendBtn = document.getElementById('authSendBtn');
+  var authSendBtnLabel = document.getElementById('authSendBtnLabel');
+  var authStatus = document.getElementById('authStatus');
+  var authError = document.getElementById('authError');
+
+  function showSignedOut() {
+    authGate.classList.remove('hidden');
+    appContent.classList.add('hidden');
+    userBar.classList.add('hidden');
+  }
+
+  function showSignedIn(user) {
+    authGate.classList.add('hidden');
+    appContent.classList.remove('hidden');
+    userBar.classList.remove('hidden');
+    userEmailEl.textContent = (user && user.email) || '';
+    loadHistory();
+  }
+
+  function getAccessToken() {
+    return sb.auth.getSession().then(function (result) {
+      return result.data.session ? result.data.session.access_token : null;
+    });
+  }
+
+  authForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    authError.classList.remove('visible');
+    authStatus.classList.remove('visible');
+    var email = authEmailInput.value.trim();
+    if (!email) return;
+    authSendBtn.disabled = true;
+    authSendBtnLabel.innerHTML = '<span class="spinner"></span> Sending…';
+    sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.origin } }).then(function (result) {
+      if (result.error) throw result.error;
+      authStatus.textContent = 'Check your email for the sign-in link.';
+      authStatus.classList.add('visible');
+    }).catch(function (err) {
+      authError.textContent = err.message || 'Could not send sign-in link. Please try again.';
+      authError.classList.add('visible');
+    }).finally(function () {
+      authSendBtn.disabled = false;
+      authSendBtnLabel.textContent = 'Send magic link';
+    });
+  });
+
+  signOutBtn.addEventListener('click', function () {
+    sb.auth.signOut();
+  });
+
+  sb.auth.onAuthStateChange(function (event, session) {
+    if (session) showSignedIn(session.user);
+    else showSignedOut();
+  });
+
+  sb.auth.getSession().then(function (result) {
+    var session = result.data.session;
+    if (session) showSignedIn(session.user);
+    else showSignedOut();
+  });
 
   var dropzone = document.getElementById('dropzone');
   var fileInput = document.getElementById('fileInput');
@@ -745,10 +892,13 @@
     clearError();
     setLoading(true);
 
-    toBase64(selectedFile).then(function (base64) {
+    Promise.all([toBase64(selectedFile), getAccessToken()]).then(function (results) {
+      var base64 = results[0];
+      var token = results[1];
+      if (!token) throw new Error('You have been signed out. Please sign in again.');
       return fetch('/api/extract', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ fileBase64: base64, mimeType: selectedFile.type, fileName: selectedFile.name })
       });
     }).then(function (res) {
@@ -864,13 +1014,16 @@
   }
 
   function loadHistory() {
-    fetch('/api/documents').then(function (res) {
+    getAccessToken().then(function (token) {
+      if (!token) throw new Error('Not signed in.');
+      return fetch('/api/documents', { headers: { 'Authorization': 'Bearer ' + token } });
+    }).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, data: data }; });
     }).then(function (result) {
       if (!result.ok) throw new Error(result.data.error || 'Could not load history.');
       var docs = result.data.documents || [];
       if (docs.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">No documents yet. Extract your first one to see it here.</div>';
+        historyList.innerHTML = '<div class="history-empty">No recent documents.</div>';
         return;
       }
       historyList.innerHTML = '';
@@ -889,14 +1042,18 @@
       });
       renderHistoryActiveState();
     }).catch(function (err) {
-      historyList.innerHTML = '<div class="history-empty">' + (err.message || 'Could not load history.') + '</div>';
+      console.error('Failed to load document history:', err);
+      historyList.innerHTML = '<div class="history-empty">No recent documents.</div>';
     });
   }
 
   function openHistoryItem(id) {
     activeHistoryId = id;
     renderHistoryActiveState();
-    fetch('/api/documents?id=' + encodeURIComponent(id)).then(function (res) {
+    getAccessToken().then(function (token) {
+      if (!token) throw new Error('Not signed in.');
+      return fetch('/api/documents?id=' + encodeURIComponent(id), { headers: { 'Authorization': 'Bearer ' + token } });
+    }).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, data: data }; });
     }).then(function (result) {
       if (!result.ok) throw new Error(result.data.error || 'Could not load document.');
@@ -905,8 +1062,6 @@
       showError(err.message || 'Could not load that document.');
     });
   }
-
-  loadHistory();
 })();
 </script>
 </body>

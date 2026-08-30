@@ -2,11 +2,10 @@
   "name": "text-extraction",
   "private": true,
   "scripts": {
-    "dev": "netlify dev"
+    "dev": "npx --yes netlify-cli dev"
   },
   "dependencies": {
     "@google/genai": "^1.9.0",
-    "@supabase/supabase-js": "^2.45.0",
-    "netlify-cli": "^26.0.0"
+    "@supabase/supabase-js": "^2.45.0"
   }
 }

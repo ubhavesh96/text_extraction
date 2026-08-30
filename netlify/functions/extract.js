@@ -78,6 +78,15 @@ function jsonResponse(statusCode, body) {
   return { statusCode, headers: CORS_HEADERS, body: JSON.stringify(body) };
 }
 
+async function getAuthedUser(event, supabase) {
+  const authHeader = event.headers.authorization || event.headers.Authorization || '';
+  const match = authHeader.match(/^Bearer (.+)$/);
+  if (!match) return null;
+  const { data, error } = await supabase.auth.getUser(match[1]);
+  if (error || !data.user) return null;
+  return data.user;
+}
+
 function extractResponseText(response) {
   if (typeof response.text === 'string') return response.text;
   if (typeof response.text === 'function') return response.text();
@@ -130,6 +139,12 @@ exports.handler = async function (event) {
     return jsonResponse(500, { error: 'Server is not configured: missing Supabase credentials.' });
   }
 
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const user = await getAuthedUser(event, supabase);
+  if (!user) {
+    return jsonResponse(401, { error: 'Please sign in to extract documents.' });
+  }
+
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   let extracted;
@@ -168,11 +183,10 @@ exports.handler = async function (event) {
     return jsonResponse(502, { error: `AI extraction failed: ${err.message || err}` });
   }
 
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-
   const { data, error } = await supabase
     .from('documents')
     .insert({
+      user_id: user.id,
       file_name: fileName || null,
       mime_type: mimeType,
       document_type: extracted.document_type || null,

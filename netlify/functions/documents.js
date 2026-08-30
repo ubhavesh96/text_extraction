@@ -14,6 +14,15 @@ function jsonResponse(statusCode, body) {
   return { statusCode, headers: CORS_HEADERS, body: JSON.stringify(body) };
 }
 
+async function getAuthedUser(event, supabase) {
+  const authHeader = event.headers.authorization || event.headers.Authorization || '';
+  const match = authHeader.match(/^Bearer (.+)$/);
+  if (!match) return null;
+  const { data, error } = await supabase.auth.getUser(match[1]);
+  if (error || !data.user) return null;
+  return data.user;
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers: CORS_HEADERS, body: '' };
@@ -28,10 +37,15 @@ exports.handler = async function (event) {
   }
 
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const user = await getAuthedUser(event, supabase);
+  if (!user) {
+    return jsonResponse(401, { error: 'Please sign in to view documents.' });
+  }
+
   const id = event.queryStringParameters && event.queryStringParameters.id;
 
   if (id) {
-    const { data, error } = await supabase.from('documents').select('*').eq('id', id).single();
+    const { data, error } = await supabase.from('documents').select('*').eq('id', id).eq('user_id', user.id).single();
     if (error) {
       return jsonResponse(404, { error: `Document not found: ${error.message}` });
     }
@@ -41,6 +55,7 @@ exports.handler = async function (event) {
   const { data, error } = await supabase
     .from('documents')
     .select(LIST_COLUMNS)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(RECENT_LIMIT);
 
