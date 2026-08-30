@@ -3,7 +3,13 @@
   functions = "netlify/functions"
 
 [[redirects]]
-  from = "/ocr"
-  to = "/.netlify/functions/ocr_handler"
+  from = "/api/extract"
+  to = "/.netlify/functions/extract"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/documents"
+  to = "/.netlify/functions/documents"
   status = 200
   force = true

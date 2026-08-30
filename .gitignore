@@ -30,3 +30,10 @@ coverage.xml
 node_modules
 
 .nodeenv
+
+# Secrets
+.env
+.env.local
+
+# Netlify Edge Functions local tooling
+deno.lock
