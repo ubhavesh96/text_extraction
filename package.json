@@ -5,7 +5,6 @@
     "dev": "npx --yes netlify-cli dev"
   },
   "dependencies": {
-    "@google/genai": "^1.9.0",
-    "@supabase/supabase-js": "^2.45.0"
+    "@google/genai": "^1.9.0"
   }
 }

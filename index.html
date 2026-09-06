@@ -65,7 +65,7 @@
   a { color: var(--accent); }
 
   .shell {
-    max-width: 1180px;
+    max-width: 760px;
     margin: 0 auto;
     padding: 32px 24px 64px;
   }
@@ -73,7 +73,6 @@
   header.top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 16px;
     margin-bottom: 28px;
   }
@@ -118,16 +117,6 @@
     margin: 0;
     max-width: 560px;
     line-height: 1.5;
-  }
-
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: 20px;
-    align-items: start;
-  }
-  @media (max-width: 860px) {
-    .layout { grid-template-columns: 1fr; }
   }
 
   .card {
@@ -434,129 +423,11 @@
   }
   .copy-btn:hover { color: var(--text); border-color: var(--text-faint); }
 
-  /* History sidebar */
-  .sidebar h4 {
-    font-size: 12.5px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: var(--text-faint);
-    margin: 0 0 12px;
-    padding: 0 4px;
-  }
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 640px;
-    overflow-y: auto;
-  }
-  .history-item {
-    text-align: left;
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 13px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: border-color .15s ease, background .15s ease;
-  }
-  .history-item:hover { border-color: var(--accent); }
-  .history-item.active { border-color: var(--accent); background: var(--accent-soft); }
-  .history-item .row1 {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 5px;
-  }
-  .history-item .title {
-    font-size: 13.5px;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .history-item .time {
-    font-size: 11px;
-    color: var(--text-faint);
-    flex-shrink: 0;
-  }
-  .history-item .snippet {
-    font-size: 12px;
-    color: var(--text-muted);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    line-height: 1.4;
-  }
-  .history-empty, .history-loading {
-    font-size: 13px;
-    color: var(--text-faint);
-    padding: 16px 4px;
-  }
-
   .sr-only {
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0,0,0,0); border: 0;
   }
-
-  .hidden { display: none !important; }
-
-  /* Auth */
-  .user-bar { display: flex; align-items: center; gap: 10px; }
-  .user-bar .email {
-    font-size: 13px;
-    color: var(--text-muted);
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  button.secondary {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    font-family: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 7px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-  button.secondary:hover { color: var(--text); border-color: var(--text-faint); }
-
-  .auth-card {
-    max-width: 420px;
-    margin: 60px auto 0;
-    padding: 32px;
-    text-align: center;
-  }
-  .auth-card h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
-  .auth-card > p { margin: 0 0 22px; color: var(--text-muted); font-size: 14px; line-height: 1.5; }
-  .auth-form { display: flex; flex-direction: column; gap: 10px; text-align: left; }
-  .auth-form label { font-size: 12.5px; font-weight: 600; color: var(--text-muted); }
-  .auth-form input[type="email"] {
-    width: 100%;
-    padding: 11px 13px;
-    border-radius: 9px;
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 14px;
-  }
-  .auth-form input[type="email"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .auth-status {
-    font-size: 13px;
-    color: var(--success);
-    display: none;
-    text-align: center;
-  }
-  .auth-status.visible { display: block; }
 </style>
 </head>
 <body>
@@ -570,187 +441,85 @@
         <p>Document understanding, structured</p>
       </div>
     </div>
-    <div class="user-bar hidden" id="userBar">
-      <span class="email" id="userEmail"></span>
-      <button class="secondary" id="signOutBtn">Sign out</button>
-    </div>
   </header>
 
-  <div class="card auth-card hidden" id="authGate">
-    <h2>Sign in to Docly</h2>
-    <p>Enter your email and we'll send you a one-time sign-in link — no password needed.</p>
-    <form class="auth-form" id="authForm">
-      <label for="authEmail">Email address</label>
-      <input type="email" id="authEmail" placeholder="you@example.com" required autocomplete="email">
-      <button type="submit" class="primary" id="authSendBtn" style="justify-content:center;">
-        <span id="authSendBtnLabel">Send magic link</span>
-      </button>
-      <div class="auth-status" id="authStatus"></div>
-      <div class="banner error" id="authError"></div>
-    </form>
-  </div>
-
-  <div id="appContent" class="hidden">
   <div class="hero">
     <h2>Turn any document into structured data</h2>
     <p>Drop in a receipt, invoice, ID, form, or scanned letter. Docly reads it, understands it, and organizes it into clean fields and tables — no typing required.</p>
   </div>
 
-  <div class="layout">
-    <main>
-      <div class="card" style="padding: 24px;">
-        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a document or image">
-          <div class="icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          </div>
-          <h3>Drag &amp; drop a file here</h3>
-          <p>or <span class="browse">browse</span> — JPG, PNG, WEBP, GIF, or PDF, up to 4MB</p>
+  <main>
+    <div class="card" style="padding: 24px;">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a document or image">
+        <div class="icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </div>
-        <input type="file" id="fileInput" class="sr-only" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf">
+        <h3>Drag &amp; drop a file here</h3>
+        <p>or <span class="browse">browse</span> — JPG, PNG, WEBP, GIF, or PDF, up to 4MB</p>
+      </div>
+      <input type="file" id="fileInput" class="sr-only" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf">
 
-        <div class="file-preview" id="filePreview">
-          <img class="thumb" id="thumbImg" alt="" style="display:none;">
-          <div class="thumb doc-icon" id="thumbDoc" style="display:none;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </div>
-          <div class="meta">
-            <div class="name" id="fileName">—</div>
-            <div class="size" id="fileSize">—</div>
-          </div>
-          <button class="remove" id="removeFile" title="Remove file" aria-label="Remove file">&times;</button>
+      <div class="file-preview" id="filePreview">
+        <img class="thumb" id="thumbImg" alt="" style="display:none;">
+        <div class="thumb doc-icon" id="thumbDoc" style="display:none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         </div>
-
-        <div class="actions">
-          <button class="primary" id="extractBtn" disabled>
-            <span id="extractBtnLabel">Extract data</span>
-          </button>
-          <span class="status-line" id="statusLine"></span>
+        <div class="meta">
+          <div class="name" id="fileName">—</div>
+          <div class="size" id="fileSize">—</div>
         </div>
-
-        <div class="banner error" id="errorBanner"></div>
+        <button class="remove" id="removeFile" title="Remove file" aria-label="Remove file">&times;</button>
       </div>
 
-      <div class="card results" id="results">
-        <div class="results-head">
-          <div>
-            <div class="chip-row">
-              <span class="chip" id="docTypeChip">Document</span>
-              <span class="chip confidence" id="confidenceChip" style="display:none;"></span>
-            </div>
-            <h3 id="docTitle">—</h3>
-            <p class="summary" id="docSummary"></p>
+      <div class="actions">
+        <button class="primary" id="extractBtn" disabled>
+          <span id="extractBtnLabel">Extract data</span>
+        </button>
+        <span class="status-line" id="statusLine"></span>
+      </div>
+
+      <div class="banner error" id="errorBanner"></div>
+    </div>
+
+    <div class="card results" id="results">
+      <div class="results-head">
+        <div>
+          <div class="chip-row">
+            <span class="chip" id="docTypeChip">Document</span>
+            <span class="chip confidence" id="confidenceChip" style="display:none;"></span>
           </div>
-          <button class="close-btn" id="closeResults" title="Dismiss" aria-label="Dismiss results">&times;</button>
+          <h3 id="docTitle">—</h3>
+          <p class="summary" id="docSummary"></p>
         </div>
-        <div class="results-body">
-          <div id="fieldGrid" class="field-grid"></div>
-          <div id="tablesContainer"></div>
-
-          <details class="section">
-            <summary>Raw text <span class="arrow">&#9656;</span></summary>
-            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-              <button class="copy-btn" data-copy-target="rawTextPre">Copy</button>
-            </div>
-            <pre id="rawTextPre"></pre>
-          </details>
-
-          <details class="section">
-            <summary>Raw JSON <span class="arrow">&#9656;</span></summary>
-            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-              <button class="copy-btn" data-copy-target="rawJsonPre">Copy</button>
-            </div>
-            <pre id="rawJsonPre"></pre>
-          </details>
-        </div>
+        <button class="close-btn" id="closeResults" title="Dismiss" aria-label="Dismiss results">&times;</button>
       </div>
-    </main>
+      <div class="results-body">
+        <div id="fieldGrid" class="field-grid"></div>
+        <div id="tablesContainer"></div>
 
-    <aside class="sidebar">
-      <h4>Recent documents</h4>
-      <div class="history-list" id="historyList">
-        <div class="history-loading">Loading…</div>
+        <details class="section">
+          <summary>Raw text <span class="arrow">&#9656;</span></summary>
+          <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+            <button class="copy-btn" data-copy-target="rawTextPre">Copy</button>
+          </div>
+          <pre id="rawTextPre"></pre>
+        </details>
+
+        <details class="section">
+          <summary>Raw JSON <span class="arrow">&#9656;</span></summary>
+          <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+            <button class="copy-btn" data-copy-target="rawJsonPre">Copy</button>
+          </div>
+          <pre id="rawJsonPre"></pre>
+        </details>
       </div>
-    </aside>
-  </div>
-  </div>
+    </div>
+  </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function () {
   'use strict';
-
-  var SUPABASE_URL = 'https://xdetpbcdpzwrjgpqhrsk.supabase.co';
-  var SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XT-Eftr_kYs4Oj59oJy9BA_9CLcxoBA';
-  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-  var authGate = document.getElementById('authGate');
-  var appContent = document.getElementById('appContent');
-  var userBar = document.getElementById('userBar');
-  var userEmailEl = document.getElementById('userEmail');
-  var signOutBtn = document.getElementById('signOutBtn');
-  var authForm = document.getElementById('authForm');
-  var authEmailInput = document.getElementById('authEmail');
-  var authSendBtn = document.getElementById('authSendBtn');
-  var authSendBtnLabel = document.getElementById('authSendBtnLabel');
-  var authStatus = document.getElementById('authStatus');
-  var authError = document.getElementById('authError');
-
-  function showSignedOut() {
-    authGate.classList.remove('hidden');
-    appContent.classList.add('hidden');
-    userBar.classList.add('hidden');
-  }
-
-  function showSignedIn(user) {
-    authGate.classList.add('hidden');
-    appContent.classList.remove('hidden');
-    userBar.classList.remove('hidden');
-    userEmailEl.textContent = (user && user.email) || '';
-    loadHistory();
-  }
-
-  function getAccessToken() {
-    return sb.auth.getSession().then(function (result) {
-      return result.data.session ? result.data.session.access_token : null;
-    });
-  }
-
-  authForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    authError.classList.remove('visible');
-    authStatus.classList.remove('visible');
-    var email = authEmailInput.value.trim();
-    if (!email) return;
-    authSendBtn.disabled = true;
-    authSendBtnLabel.innerHTML = '<span class="spinner"></span> Sending…';
-    sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.origin } }).then(function (result) {
-      if (result.error) throw result.error;
-      authStatus.textContent = 'Check your email for the sign-in link.';
-      authStatus.classList.add('visible');
-    }).catch(function (err) {
-      authError.textContent = err.message || 'Could not send sign-in link. Please try again.';
-      authError.classList.add('visible');
-    }).finally(function () {
-      authSendBtn.disabled = false;
-      authSendBtnLabel.textContent = 'Send magic link';
-    });
-  });
-
-  signOutBtn.addEventListener('click', function () {
-    sb.auth.signOut();
-  });
-
-  sb.auth.onAuthStateChange(function (event, session) {
-    if (session) showSignedIn(session.user);
-    else showSignedOut();
-  });
-
-  sb.auth.getSession().then(function (result) {
-    var session = result.data.session;
-    if (session) showSignedIn(session.user);
-    else showSignedOut();
-  });
 
   var dropzone = document.getElementById('dropzone');
   var fileInput = document.getElementById('fileInput');
@@ -765,31 +534,19 @@
   var statusLine = document.getElementById('statusLine');
   var errorBanner = document.getElementById('errorBanner');
   var results = document.getElementById('results');
-  var historyList = document.getElementById('historyList');
   var closeResultsBtn = document.getElementById('closeResults');
 
   var SUPPORTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
   var MAX_BYTES = 4 * 1024 * 1024;
-  var STAGE_MESSAGES = ['Reading document…', 'Understanding content…', 'Saving…'];
+  var STAGE_MESSAGES = ['Reading document…', 'Understanding content…'];
 
   var selectedFile = null;
   var stageTimer = null;
-  var activeHistoryId = null;
 
   function formatBytes(bytes) {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-  }
-
-  function formatDate(iso) {
-    try {
-      var d = new Date(iso);
-      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' +
-        d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
-    } catch (e) {
-      return '';
-    }
   }
 
   function showError(message) {
@@ -807,6 +564,38 @@
       reader.readAsDataURL(file);
       reader.onload = function () { resolve(reader.result.split(',')[1]); };
       reader.onerror = reject;
+    });
+  }
+
+  var MAX_IMAGE_DIMENSION = 1800;
+
+  // Downscales images before upload: a full-resolution phone photo can be huge
+  // in pixel dimensions (and therefore input tokens) even when the file itself
+  // is only a few MB, which can exceed the model's per-request token limit.
+  function prepareUpload(file) {
+    if (file.type === 'application/pdf') {
+      return toBase64(file).then(function (base64) { return { base64: base64, mimeType: file.type }; });
+    }
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(img.naturalWidth, img.naturalHeight));
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function (blob) {
+          if (!blob) { reject(new Error('Could not process this image.')); return; }
+          var reader = new FileReader();
+          reader.onload = function () { resolve({ base64: reader.result.split(',')[1], mimeType: 'image/jpeg' }); };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('Could not read this image.')); };
+      img.src = url;
     });
   }
 
@@ -866,8 +655,6 @@
   removeFileBtn.addEventListener('click', function (e) { e.stopPropagation(); resetSelectedFile(); });
   closeResultsBtn.addEventListener('click', function () {
     results.classList.remove('visible');
-    activeHistoryId = null;
-    renderHistoryActiveState();
   });
 
   function setLoading(isLoading) {
@@ -892,14 +679,12 @@
     clearError();
     setLoading(true);
 
-    Promise.all([toBase64(selectedFile), getAccessToken()]).then(function (results) {
-      var base64 = results[0];
-      var token = results[1];
-      if (!token) throw new Error('You have been signed out. Please sign in again.');
+    var fileNameForUpload = selectedFile.name;
+    prepareUpload(selectedFile).then(function (prepared) {
       return fetch('/api/extract', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ fileBase64: base64, mimeType: selectedFile.type, fileName: selectedFile.name })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileBase64: prepared.base64, mimeType: prepared.mimeType, fileName: fileNameForUpload })
       });
     }).then(function (res) {
       return res.json().then(function (data) { return { ok: res.ok, data: data }; });
@@ -908,8 +693,6 @@
         throw new Error(result.data.error || 'Extraction failed.');
       }
       renderDocument(result.data.document);
-      activeHistoryId = result.data.document.id;
-      loadHistory();
       resetSelectedFile();
     }).catch(function (err) {
       showError(err.message || 'Something went wrong. Please try again.');
@@ -1006,62 +789,6 @@
       });
     });
   });
-
-  function renderHistoryActiveState() {
-    document.querySelectorAll('.history-item').forEach(function (item) {
-      item.classList.toggle('active', item.getAttribute('data-id') === activeHistoryId);
-    });
-  }
-
-  function loadHistory() {
-    getAccessToken().then(function (token) {
-      if (!token) throw new Error('Not signed in.');
-      return fetch('/api/documents', { headers: { 'Authorization': 'Bearer ' + token } });
-    }).then(function (res) {
-      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
-    }).then(function (result) {
-      if (!result.ok) throw new Error(result.data.error || 'Could not load history.');
-      var docs = result.data.documents || [];
-      if (docs.length === 0) {
-        historyList.innerHTML = '<div class="history-empty">No recent documents.</div>';
-        return;
-      }
-      historyList.innerHTML = '';
-      docs.forEach(function (doc) {
-        var item = document.createElement('button');
-        item.className = 'history-item';
-        item.setAttribute('data-id', doc.id);
-        item.innerHTML =
-          '<div class="row1"><span class="title"></span><span class="time"></span></div>' +
-          '<div class="snippet"></div>';
-        item.querySelector('.title').textContent = doc.title || doc.file_name || 'Untitled';
-        item.querySelector('.time').textContent = formatDate(doc.created_at);
-        item.querySelector('.snippet').textContent = doc.summary || doc.document_type || '';
-        item.addEventListener('click', function () { openHistoryItem(doc.id); });
-        historyList.appendChild(item);
-      });
-      renderHistoryActiveState();
-    }).catch(function (err) {
-      console.error('Failed to load document history:', err);
-      historyList.innerHTML = '<div class="history-empty">No recent documents.</div>';
-    });
-  }
-
-  function openHistoryItem(id) {
-    activeHistoryId = id;
-    renderHistoryActiveState();
-    getAccessToken().then(function (token) {
-      if (!token) throw new Error('Not signed in.');
-      return fetch('/api/documents?id=' + encodeURIComponent(id), { headers: { 'Authorization': 'Bearer ' + token } });
-    }).then(function (res) {
-      return res.json().then(function (data) { return { ok: res.ok, data: data }; });
-    }).then(function (result) {
-      if (!result.ok) throw new Error(result.data.error || 'Could not load document.');
-      renderDocument(result.data.document);
-    }).catch(function (err) {
-      showError(err.message || 'Could not load that document.');
-    });
-  }
 })();
 </script>
 </body>

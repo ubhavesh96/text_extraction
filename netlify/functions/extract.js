@@ -1,5 +1,4 @@
 const { GoogleGenAI } = require('@google/genai');
-const { createClient } = require('@supabase/supabase-js');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -78,15 +77,6 @@ function jsonResponse(statusCode, body) {
   return { statusCode, headers: CORS_HEADERS, body: JSON.stringify(body) };
 }
 
-async function getAuthedUser(event, supabase) {
-  const authHeader = event.headers.authorization || event.headers.Authorization || '';
-  const match = authHeader.match(/^Bearer (.+)$/);
-  if (!match) return null;
-  const { data, error } = await supabase.auth.getUser(match[1]);
-  if (error || !data.user) return null;
-  return data.user;
-}
-
 function extractResponseText(response) {
   if (typeof response.text === 'string') return response.text;
   if (typeof response.text === 'function') return response.text();
@@ -135,15 +125,6 @@ exports.handler = async function (event) {
   if (!process.env.GEMINI_API_KEY) {
     return jsonResponse(500, { error: 'Server is not configured: missing GEMINI_API_KEY.' });
   }
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return jsonResponse(500, { error: 'Server is not configured: missing Supabase credentials.' });
-  }
-
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const user = await getAuthedUser(event, supabase);
-  if (!user) {
-    return jsonResponse(401, { error: 'Please sign in to extract documents.' });
-  }
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -178,15 +159,21 @@ exports.handler = async function (event) {
       return jsonResponse(429, { error: 'Rate limited by the AI provider (free tier quota). Please wait a bit and try again.' });
     }
     if (status === 400) {
-      return jsonResponse(400, { error: `Could not process this file: ${err.message}` });
+      const message = String(err.message || '');
+      if (/input_tokens_exceeded|exceeds the allowed limit/i.test(message)) {
+        return jsonResponse(400, {
+          error: isPdf
+            ? 'This PDF is too large or has too many pages to process. Please try a shorter document.'
+            : 'This image is too large or detailed to process. Please try a smaller or lower-resolution image.'
+        });
+      }
+      return jsonResponse(400, { error: `Could not process this file: ${message}` });
     }
     return jsonResponse(502, { error: `AI extraction failed: ${err.message || err}` });
   }
 
-  const { data, error } = await supabase
-    .from('documents')
-    .insert({
-      user_id: user.id,
+  return jsonResponse(200, {
+    document: {
       file_name: fileName || null,
       mime_type: mimeType,
       document_type: extracted.document_type || null,
@@ -197,13 +184,6 @@ exports.handler = async function (event) {
       tables: extracted.tables || [],
       raw_text: extracted.raw_text || null,
       confidence: typeof extracted.confidence === 'number' ? extracted.confidence : null
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return jsonResponse(502, { error: `Extraction succeeded but saving to the database failed: ${error.message}` });
-  }
-
-  return jsonResponse(200, { document: data });
+    }
+  });
 };
